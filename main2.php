@@ -8,7 +8,8 @@
 <body>
 <h1>野々市市災害掲示板</h1>
 <title>野々市市災害掲示板</title>
-    <form action="" method="post">
+<img src="img/nonoichi.jpg" width="400" height="260">
+    <form action="" method="post" enctype="multipart/form-data">
         ユーザー名:<input type="text" name="name" value=""><br><br>
         メッセージ:<input type="text" name="comment" value=""><br><br>
         投稿画像:<input type="file" name="picture" value=""><br><br>
@@ -80,13 +81,18 @@ try {
 if(isset($_POST['regist'])){
     $name = $_POST['name'];
     $comment = $_POST['comment'];
-    $picture = $_POST['picture'];
     $address = $_POST['address'];
     $type = $_POST['type'];
+    $image = uniqid(mt_rand(), true);//ファイル名をユニーク化
+    $image .= '.' . substr(strrchr($_FILES['picture']['name'], '.'), 1);//アップロードされたファイルの拡張子を取得
+    $file = "img/$image";
     
     $sql1 = "INSERT INTO pd (name, comment, picture, date, address, type) VALUES (:name, :comment, :picture, now(), :address, :type)";
     $stmt1 = $pdo -> prepare($sql1);
-    $params = array(':name'=> $name,':comment'=>$comment,':picture'=>$picture,':address'=>$address,':type'=>$type);
+    $params = array(':name'=> $name,':comment'=>$comment,':picture'=>$image,':address'=>$address,':type'=>$type);
+    if (!empty($_FILES['picture']['name'])) {//ファイルが選択されていれば$imageにファイル名を代入
+        move_uploaded_file($_FILES['picture']['tmp_name'], './img/' . $image);//imagesディレクトリにファイル保存
+    }
     $stmt1->execute($params);
 
     }
@@ -94,14 +100,17 @@ if(isset($_POST['regist'])){
     $sql2 = "SELECT * FROM pd";
     $stmt2 = $pdo->query($sql2);
     foreach($stmt2 as $row){
+        $img = "$row[picture]";
         echo '--------------------'.'<br>'.
             '氏名:'.$row['name'].'<br>'.
             'メッセージ:'.$row['comment'].'<br>'.
-            '写真:'.$row['picture'].'<br>'.
+            #'写真:'.$row['picture'].'<br>'.
             '日付:'.$row['date'].'<br>'.
             '場所:'.$row['address'].'<br>'.
             '災害の種類:'.$row['type'].'<br>';
-        echo '<br>';
+        echo '写真:'.'<br>';
+        echo "<img src = './img/$img' width = '500' height = '300'>";
+        echo '<br>';  
     }
 
 ?>
